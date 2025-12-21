@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+
+# Environment & Secrets
+.env
+serviceAccountKey.json
+GEMINI_API_KEY.env
+# .env.example is NOT ignored (for reference)
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Video ใหญ่
+*.mov
+avatar.mp4
