@@ -37,7 +37,9 @@ class PdfAIEngine:
         try:
             self.client = OpenAI(
                 base_url="https://api.groq.com/openai/v1",
-                api_key=final_api_key
+                api_key=final_api_key,
+                max_retries=0,  # Disable automatic retries to prevent worker timeout
+                timeout=30.0    # Set request timeout to 30 seconds
             )
             logger.info("Groq AI client connected successfully")
         except Exception as e:
@@ -195,7 +197,8 @@ class PdfAIEngine:
             "gemma2-9b-it"               # ตัวสำรองสุดท้าย
         ]
 
-        for model in models_to_try:
+        retry_delay = 0.5  # Start with 0.5 seconds
+        for model_index, model in enumerate(models_to_try):
             try:
                 logger.info(f"Trying AI model: {model}")
                 chat_completion = self.client.chat.completions.create(
@@ -214,12 +217,22 @@ class PdfAIEngine:
 
             except Exception as e:
                 error_msg = str(e)
-                if "429" in error_msg:
+                if "429" in error_msg or "rate_limit" in error_msg.lower():
                     logger.warning(f"Model {model} quota exceeded (429) - switching to backup model")
-                    time.sleep(1) # พักนิดนึงก่อนลองตัวใหม่
+                    # Only sleep if there are more models to try
+                    if model_index < len(models_to_try) - 1:
+                        logger.info(f"Waiting {retry_delay}s before trying next model...")
+                        time.sleep(retry_delay)
+                        retry_delay = min(retry_delay * 2, 3)  # Exponential backoff, max 3s
+                    continue
+                elif "timeout" in error_msg.lower():
+                    logger.error(f"Timeout with model {model} - trying next model")
                     continue
                 else:
                     logger.error(f"API error with model {model}: {error_msg}", exc_info=True)
+                    # Try next model instead of returning immediately
+                    if model_index < len(models_to_try) - 1:
+                        continue
                     return "ขออภัย ระบบขัดข้องชั่วคราว"
 
         logger.error("All AI models exhausted - quota limit reached")

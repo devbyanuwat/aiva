@@ -47,7 +47,14 @@ echo ""
 if [ "$1" == "--production" ] || [ "$1" == "-p" ]; then
     echo "Mode: PRODUCTION (using gunicorn)"
     pip3 install gunicorn -q 2>/dev/null
-    gunicorn -w 4 -b $HOST:$PORT app:app
+
+    # Use config file if exists, otherwise use command line args
+    if [ -f "gunicorn_config.py" ]; then
+        echo "Using gunicorn_config.py"
+        gunicorn -c gunicorn_config.py app:app
+    else
+        gunicorn -w 4 -b $HOST:$PORT --timeout 120 --graceful-timeout 30 app:app
+    fi
 else
     echo "Mode: DEVELOPMENT"
     echo ""
