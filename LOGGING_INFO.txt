@@ -1,0 +1,135 @@
+================================================================================
+AIVA - ระบบ Logging
+================================================================================
+
+ระบบ logging ได้ถูกติดตั้งและพร้อมใช้งานแล้ว
+
+================================================================================
+การตั้งค่า
+================================================================================
+
+รูปแบบ Log:        Plain Text
+ระดับ Log:         DEBUG, INFO, WARNING, ERROR, CRITICAL
+ไฟล์ Log:          logs/aiva.log
+การหมุนเวียน:      อัตโนมัติเมื่อไฟล์ใหญ่ถึง 10MB
+จำนวนไฟล์สำรอง:   5 ไฟล์ (aiva.log.1, aiva.log.2, ...)
+Encoding:          UTF-8
+
+Format:
+  %(asctime)s - %(levelname)s - [%(name)s] - %(message)s
+  ตัวอย่าง: 2025-12-23 09:04:55 - INFO - [__main__] - AIVA System Starting Up
+
+================================================================================
+ข้อมูลที่ถูกบันทึก
+================================================================================
+
+1. การเริ่มต้นระบบ (INFO)
+   - System startup
+   - Configuration loaded
+   - Firebase connection status
+   - AI engine initialization
+   - PDF folder verification
+
+2. HTTP Requests (INFO)
+   - ทุก request ที่เข้ามา (/, /greeting, /ask, /tts_audio, /submit_feedback)
+   - IP address ของผู้ใช้งาน
+   - ข้อมูลที่ส่งมา (question, text, feedback)
+
+3. AI Operations (INFO, DEBUG)
+   - คำถามที่ได้รับ
+   - การตรวจสอบ FAQ
+   - การเรียกใช้ AI models (llama, gemma)
+   - คำตอบที่ส่งกลับ
+   - Context size ที่ใช้
+
+4. FAQ System (INFO, DEBUG)
+   - FAQ matches
+   - Keywords ที่จับได้
+   - คำตอบที่ส่งกลับ
+
+5. Knowledge Base (INFO, DEBUG)
+   - จำนวนไฟล์ PDF และ TXT ที่โหลด
+   - การ extract text จากแต่ละไฟล์
+   - ขนาดของ knowledge base
+   - Context selection และ chunking
+
+6. Text-to-Speech (INFO, DEBUG)
+   - TTS requests
+   - ข้อความที่แปลงเป็นเสียง
+   - ไฟล์เสียงที่สร้างขึ้น
+
+7. Feedback System (INFO)
+   - คะแนนที่ได้รับ
+   - ข้อความ feedback
+   - การบันทึกลง Firebase
+
+8. Errors และ Warnings (ERROR, WARNING)
+   - ข้อผิดพลาดทั้งหมดพร้อม stack trace
+   - API errors (429, timeout, etc.)
+   - Firebase errors
+   - File loading errors
+   - Empty requests
+   - Missing configurations
+
+9. State Management (DEBUG)
+   - การอัพเดท state (last_question, last_answer)
+
+================================================================================
+การดู Log
+================================================================================
+
+ดู log ล่าสุด:
+  tail -f logs/aiva.log
+
+ดู 50 บรรทัดล่าสุด:
+  tail -50 logs/aiva.log
+
+ค้นหา errors:
+  grep "ERROR" logs/aiva.log
+
+ค้นหาคำถามที่ถูกถาม:
+  grep "Question received" logs/aiva.log
+
+ค้นหา AI responses:
+  grep "AI Response" logs/aiva.log
+
+ดู log แบบ real-time:
+  tail -f logs/aiva.log | grep --line-buffered "INFO\|ERROR\|WARNING"
+
+================================================================================
+ตัวอย่าง Log Entries
+================================================================================
+
+[Startup]
+2025-12-23 09:04:55 - INFO - [__main__] - AIVA System Starting Up
+2025-12-23 09:04:55 - INFO - [__main__] - Configuration loaded - PDF Folder: data_files, Port: 5003
+2025-12-23 09:04:57 - INFO - [__main__] - Firebase connected successfully
+
+[HTTP Request]
+2025-12-23 09:05:20 - INFO - [__main__] - Request: GET /greeting from 127.0.0.1
+2025-12-23 09:05:20 - INFO - [__main__] - Response: /greeting - Sent greeting message
+
+[Question & Answer]
+2025-12-23 09:06:15 - INFO - [__main__] - Request: POST /ask from 127.0.0.1
+2025-12-23 09:06:15 - INFO - [__main__] - Question received: วิทยาลัยมีหลักสูตรอะไรบ้าง
+2025-12-23 09:06:15 - INFO - [pdf_ai_engine] - Processing question: วิทยาลัยมีหลักสูตรอะไรบ้าง
+2025-12-23 09:06:15 - DEBUG - [pdf_ai_engine] - No FAQ match found
+2025-12-23 09:06:15 - INFO - [pdf_ai_engine] - Calling AI with context (6000 chars)...
+2025-12-23 09:06:15 - INFO - [pdf_ai_engine] - Trying AI model: llama-3.3-70b-versatile
+2025-12-23 09:06:17 - INFO - [pdf_ai_engine] - AI response received from llama-3.3-70b-versatile (245 chars)
+2025-12-23 09:06:17 - INFO - [__main__] - AI Response: วิทยาลัยพณิชยการธนบุรีมีหลักสูตรหลากหลาย...
+
+[Error Example]
+2025-12-23 09:07:30 - ERROR - [pdf_ai_engine] - API error with model llama-3.3-70b-versatile: 429 Rate Limit
+2025-12-23 09:07:30 - WARNING - [pdf_ai_engine] - Model llama-3.3-70b-versatile quota exceeded (429) - switching to backup model
+
+================================================================================
+หมายเหตุ
+================================================================================
+
+- Log ทั้งหมดจะถูกบันทึกทั้งในไฟล์และแสดงใน console
+- DEBUG messages จะช่วยในการแก้ไขปัญหา แต่อาจมีข้อมูลมาก
+- ไฟล์ log จะหมุนเวียนอัตโนมัติ ไม่ต้องกังวลเรื่องพื้นที่
+- สามารถปรับระดับ log ได้ที่ app.py บรรทัด 59: root_logger.setLevel(logging.DEBUG)
+
+================================================================================

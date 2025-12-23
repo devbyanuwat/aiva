@@ -555,6 +555,27 @@
       // หรือโหลดหลัง page load 2 วินาที
       setTimeout(loadVideo, 2000);
 
+      // --- Auto Greeting เมื่อเปิดหน้าเว็บ ---
+      async function autoGreeting() {
+        try {
+          const res = await fetch('/greeting');
+          const data = await res.json();
+
+          if (data.ok && data.message) {
+            // รอ 1.5 วินาทีให้ page โหลดเสร็จก่อน
+            setTimeout(() => {
+              showSpeechBox(data.message);
+              playTTS(data.message);
+            }, 1500);
+          }
+        } catch (e) {
+          console.log('Auto greeting failed:', e);
+        }
+      }
+
+      // เรียกทักทายอัตโนมัติ
+      autoGreeting();
+
       // Pause video เมื่อ tab ไม่ active
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
